@@ -1,0 +1,6 @@
+{
+  "name": "Planejamento CEJAMPM",
+  "description": "Aplicativo para organização e gerenciamento de planejamentos escolares para professores e administradores.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

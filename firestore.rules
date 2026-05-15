@@ -1,0 +1,91 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && (request.auth.token.email_verified == true || request.auth.token.email == 'admin@cejampm.com');
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
+        request.auth.token.email == 'professorjarrilson@gmail.com'
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Validations
+    function isValidUser(data) {
+      return data.uid is string &&
+             data.email is string &&
+             data.role in ['admin', 'professor'] &&
+             data.keys().hasAll(['uid', 'email', 'role']);
+    }
+
+    function isValidPlanning(data) {
+      return data.professorId is string &&
+             data.professorName is string &&
+             data.subject is string &&
+             data.date is string &&
+             data.className is string &&
+             data.content is string;
+    }
+
+    function isValidProject(data) {
+      return data.title is string &&
+             data.description is string;
+    }
+
+    // Collection: Users
+    match /users/{userId} {
+      allow get: if isSignedIn() && (isOwner(userId) || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isSignedIn() && isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if isSignedIn() && (
+        (isOwner(userId) && (request.resource.data.role == resource.data.role || request.auth.token.email == 'professorjarrilson@gmail.com')) || 
+        isAdmin()
+      ) && isValidUser(request.resource.data);
+    }
+
+    // Collection: Plannings
+    match /plannings/{planningId} {
+      allow get: if isSignedIn() && (isOwner(resource.data.professorId) || isAdmin());
+      allow list: if isSignedIn() && (
+        isAdmin() || 
+        (resource.data.professorId == request.auth.uid)
+      );
+      allow create: if isSignedIn() && 
+                      isOwner(request.resource.data.professorId) && 
+                      isValidPlanning(request.resource.data);
+      allow update: if isSignedIn() && (
+        isOwner(resource.data.professorId) || 
+        isAdmin()
+      ) && isValidPlanning(request.resource.data);
+      allow delete: if isSignedIn() && (isOwner(resource.data.professorId) || isAdmin());
+    }
+
+    // Collection: Projects
+    match /projects/{projectId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() && isValidProject(request.resource.data);
+      allow delete: if isAdmin();
+    }
+  }
+}

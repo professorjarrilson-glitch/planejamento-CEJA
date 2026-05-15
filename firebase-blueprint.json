@@ -1,0 +1,63 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "name": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "professor"] },
+        "subject": { "type": "string" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Planning": {
+      "title": "Planning",
+      "description": "School planning details",
+      "type": "object",
+      "properties": {
+        "professorId": { "type": "string" },
+        "professorName": { "type": "string" },
+        "subject": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "className": { "type": "string" },
+        "content": { "type": "string" },
+        "methodology": { "type": "string" },
+        "resources": { "type": "string" },
+        "evaluation": { "type": "string" },
+        "observations": { "type": "string" },
+        "projectId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["professorId", "professorName", "subject", "date", "className", "content"]
+    },
+    "Project": {
+      "title": "Project",
+      "description": "Pedagogical project details",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "pdfUrl": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "description"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/plannings/{planningId}": {
+      "schema": "Planning",
+      "description": "Lessons and school planning"
+    },
+    "/projects/{projectId}": {
+      "schema": "Project",
+      "description": "Pedagogical projects managed by admins"
+    }
+  }
+}
